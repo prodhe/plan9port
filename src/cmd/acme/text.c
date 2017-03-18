@@ -682,13 +682,13 @@ texttype(Text *t, Rune r)
 		return;
 	case Kdown:
 		typecommit(t);
-		nnb = 0;
-		if(t->q0>0 && textreadc(t, t->q0-1)!='\n')
-			nnb = textbswidth(t, 0x15);
 		q0 = t->q0;
+		nnb = 0;
+		if(q0>0 && textreadc(t, q0-1)!='\n')
+			nnb = textbswidth(t, 0x15);
 		while(q0<t->file->b.nc && textreadc(t, q0)!='\n')
 			q0++;
-		if (q0+1 != t->file->b.nc)
+		if (q0+1 < t->file->b.nc)
 			q0++;
 		while(q0<t->file->b.nc && textreadc(t, q0)!='\n' && nnb--)
 			q0++;
