@@ -688,7 +688,7 @@ texttype(Text *t, Rune r)
 			nnb = textbswidth(t, 0x15);
 		while(q0<t->file->b.nc && textreadc(t, q0)!='\n')
 			q0++;
-		if (q0+1 < t->file->b.nc)
+		if (q0+1 <= t->file->b.nc)
 			q0++;
 		while(q0<t->file->b.nc && textreadc(t, q0)!='\n' && nnb--)
 			q0++;
