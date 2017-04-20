@@ -764,11 +764,22 @@ texttype(Text *t, Rune r)
 		nnb = 0;
 		if(t->q0>0 && textreadc(t, t->q0-1)!='\n')
 			nnb = textbswidth(t, 0x15);
+		/* if already at beginning, wrap backwards to previous line if possible */
+		if (nnb == 0 && t->q0>0) {
+			textshow(t, t->q0-1, t->q0-1, TRUE);
+			return;
+		}
 		textshow(t, t->q0-nnb, t->q0-nnb, TRUE);
 		return;
 	case 0x05:	/* ^E: end of line */
 		typecommit(t);
 		q0 = t->q0;
+		/* if already at end, wrap forward to the next line if possible */
+		if (q0<t->file->b.nc && textreadc(t, q0) == '\n') {
+			q0++;
+			textshow(t, q0, q0, TRUE);
+			return;
+		}
 		while(q0<t->file->b.nc && textreadc(t, q0)!='\n')
 			q0++;
 		textshow(t, q0, q0, TRUE);
