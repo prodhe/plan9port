@@ -759,6 +759,8 @@ texttype(Text *t, Rune r)
 			textshow(t, t->file->b.nc, t->file->b.nc, FALSE);
 		return;
 	case 0x09:	/* ^I (TAB) */
+		if(t->what!=Body)
+			break;
 		if(t->w->tabexpand == TRUE){
 			for(i=0; i < t->w->body.tabstop; i++){
 				texttype(t, ' ');
