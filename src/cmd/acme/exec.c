@@ -1374,14 +1374,13 @@ tabexpand(Text *et, Text *_0, Text *argt, int _1, int _2, Rune *arg, int narg)
 		return;
 	w = et->w;
 
-if (w->tabexpand) {
-w->tabexpand = 0;
-warning(nil, "%.*S: Tabexpand OFF\n", w->body.file->nname, w->body.file->name);
-} else {
-w->tabexpand = 1;
-warning(nil, "%.*S: Tabexpand ON\n", w->body.file->nname, w->body.file->name);
-}
-	/* printf("tabexpand: %d\n", w->tabexpand); */
+	if(w->tabexpand){
+		w->tabexpand = FALSE;
+		warning(nil, "%.*S: Tabexpand OFF\n", w->body.file->nname, w->body.file->name);
+	}else{
+		w->tabexpand = TRUE;
+		warning(nil, "%.*S: Tabexpand ON\n", w->body.file->nname, w->body.file->name);
+	}
 }
 
 void
