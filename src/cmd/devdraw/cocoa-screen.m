@@ -60,7 +60,7 @@ AUTOFRAMEWORK(Cocoa)
 
 int usegestures = 0;
 int useliveresizing = 0;
-int useoldfullscreen = 0;
+int useoldfullscreen = 1;
 int usebigarrow = 0;
 
 static void setprocname(const char*);
