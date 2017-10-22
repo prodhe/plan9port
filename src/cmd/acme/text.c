@@ -695,19 +695,10 @@ texttype(Text *t, Rune r)
 			textshow(t, t->q1+1, t->q1+1, TRUE);
 		return;
 	case Kdown:
-		typecommit(t);
-		q0 = t->q0;
-		nnb = 0;
-		if(q0>0 && textreadc(t, q0-1)!='\n')
-			nnb = textbswidth(t, 0x15);
-		while(q0<t->file->b.nc && textreadc(t, q0)!='\n')
-			q0++;
-		if (q0+1 <= t->file->b.nc)
-			q0++;
-		while(q0<t->file->b.nc && textreadc(t, q0)!='\n' && nnb--)
-			q0++;
-		textshow(t, q0, q0, TRUE);
-		return;
+		if(t->what == Tag)
+			goto Tagdown;
+		n = t->fr.maxlines/3;
+		goto case_Down;
 	case Kscrollonedown:
 		if(t->what == Tag)
 			goto Tagdown;
@@ -722,25 +713,10 @@ texttype(Text *t, Rune r)
 		textsetorigin(t, q0, TRUE);
 		return;
 	case Kup:
-		typecommit(t);
-		q0 = t->q0;
-		nnb = 0;
-		n = 0;
-		if(q0>0 && textreadc(t, q0-1)!='\n')
-			nnb = textbswidth(t, 0x15);
-		q0 -= nnb;
-		if (q0>0)
-			q0--;
-		while (q0>0 && textreadc(t, q0-1)!='\n')
-			if (q0 == 0)
-				break;
-			else {
-				q0--;
-				n++;
-			}
-		q0 += (nnb > n) ? n : nnb;
-		textshow(t, q0, q0, TRUE);
-		return;
+		if(t->what == Tag)
+			goto Tagup;
+		n = t->fr.maxlines/3;
+		goto case_Up;
 	case Kscrolloneup:
 		if(t->what == Tag)
 			goto Tagup;
@@ -806,6 +782,40 @@ texttype(Text *t, Rune r)
 		}
 		while(q0<t->file->b.nc && textreadc(t, q0)!='\n')
 			q0++;
+		textshow(t, q0, q0, TRUE);
+		return;
+	case 0x0E:	/* ^N: move one line down */
+		typecommit(t);
+		q0 = t->q0;
+		nnb = 0;
+		if(q0>0 && textreadc(t, q0-1)!='\n')
+			nnb = textbswidth(t, 0x15);
+		while(q0<t->file->b.nc && textreadc(t, q0)!='\n')
+			q0++;
+		if (q0+1 <= t->file->b.nc)
+			q0++;
+		while(q0<t->file->b.nc && textreadc(t, q0)!='\n' && nnb--)
+			q0++;
+		textshow(t, q0, q0, TRUE);
+		return;
+	case 0x10:	/* ^P: move one line up */
+		typecommit(t);
+		q0 = t->q0;
+		nnb = 0;
+		n = 0;
+		if(q0>0 && textreadc(t, q0-1)!='\n')
+			nnb = textbswidth(t, 0x15);
+		q0 -= nnb;
+		if (q0>0)
+			q0--;
+		while (q0>0 && textreadc(t, q0-1)!='\n')
+			if (q0 == 0)
+				break;
+			else {
+				q0--;
+				n++;
+			}
+		q0 += (nnb > n) ? n : nnb;
 		textshow(t, q0, q0, TRUE);
 		return;
 	case Kcmd+'c':	/* %C: copy */
