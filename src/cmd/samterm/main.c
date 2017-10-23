@@ -108,6 +108,8 @@ threadmain(int argc, char *argv[])
 				continue;
 			}
 			nwhich = flwhich(mousep->xy);
+			if(nwhich && nwhich!=which)
+				current(nwhich);
 			scr = which && ptinrect(mousep->xy, which->scroll);
 			if(mousep->buttons)
 				flushtyping(1);
