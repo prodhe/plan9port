@@ -483,6 +483,48 @@ flushtyping(int clearesc)
 	typeend = -1;
 }
 
+void
+sendcmd(char *c, int n, Text *t) {
+	Text *to = t;
+	Rune buf[100];
+	Rune *p = buf;
+	Flayer *l;
+	long a;
+
+	t = &cmd;
+	for(l=t->l; l->textfn==0; l++)
+		;
+	current(l);
+	flushtyping(0);
+	a = t->rasp.nrunes;
+	flsetselect(l, a, a);
+	center(l, a);
+
+	for(int x = 0; x < n; x++){
+		chartorune(p++,c++);
+	}
+	*p++ = '\n';
+	if(typestart < 0)
+		typestart = a;
+	if(typeesc < 0)
+		typeesc = a;
+	hgrow(t->tag, a, p-buf, 0);
+	t->lock++;	/* pretend we Trequest'ed for hdatarune*/
+	hdatarune(t->tag, a, buf, p-buf);
+	a += p-buf;
+	l->p0 = a;
+	l->p1 = a;
+	typeend = a;
+	flushtyping(0);
+	onethird(l, a);
+
+	t = to;
+	for(l=t->l; l->textfn==0; l++)
+		;
+	current(l);
+	flushtyping(1);
+}
+
 #define	BACKSCROLLKEY	Kup
 #define	ENDKEY	Kend
 #define	ESC		0x1B
