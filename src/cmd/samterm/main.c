@@ -539,6 +539,8 @@ sendcmd(char *c, int n, Text *t) {
 #define	CUT	(Kcmd+'x')
 #define	COPY	(Kcmd+'c')
 #define	PASTE	(Kcmd+'v')
+#define	UNDO	(Kcmd+'z')
+#define	REDO	(Kcmd+'Z')
 
 int
 nontypingkey(int c)
@@ -670,6 +672,10 @@ type(Flayer *l, int res)	/* what a bloody mess this is */
 		for(l=t->l; l<&t->l[NL]; l++)
 			if(l->textfn)
 				flsetselect(l, l->p0, l->p1);
+	}else if(c == UNDO) {
+		sendcmd("u", 1, t);
+	}else if(c == REDO) {
+		sendcmd("u-1", 3, t);
 	}else if(backspacing && !hostlock){
 		/* backspacing immediately after outcmd(): sorry */
 		if(l->f.p0>0 && a>0){
