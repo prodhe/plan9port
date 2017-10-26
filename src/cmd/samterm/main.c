@@ -665,21 +665,21 @@ type(Flayer *l, int res)	/* what a bloody mess this is */
 		center(l, t->rasp.nrunes);
 	}else if(c == LINESTART || c == LINEEND){
 		flushtyping(1);
-		if(c == LINESTART) {
-            if (a > 0 && raspc(&t->rasp, a-1)=='\n')
-                a--;
-            else {
-                while(a > 0 && raspc(&t->rasp, a-1)!='\n')
-                    a--;
-            }
-        }else{
-            if(a < t->rasp.nrunes && raspc(&t->rasp, a)=='\n')
+		if(c == LINESTART){
+			if (a > 0 && raspc(&t->rasp, a-1)=='\n')
+				a--;
+			else{
+				while(a > 0 && raspc(&t->rasp, a-1)!='\n')
+					a--;
+			}
+		}else{
+			if(a < t->rasp.nrunes && raspc(&t->rasp, a)=='\n')
 				a++;
-            else {
-                while(a < t->rasp.nrunes && raspc(&t->rasp, a)!='\n')
-                    a++;
-            }
-        }
+			else{
+				while(a < t->rasp.nrunes && raspc(&t->rasp, a)!='\n')
+					a++;
+			}
+		}
 		l->p0 = l->p1 = a;
 		for(l=t->l; l<&t->l[NL]; l++)
 			if(l->textfn)
