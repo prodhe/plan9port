@@ -156,6 +156,8 @@ scroll(Flayer *l, int but)
 		p0 = 0;
 		if(but == 1 || but == 4) {
 			p0 = (long)(my-s.min.y)/l->f.font->height+1;
+			if(but == 4)
+				p0 = (long)2;
 			but = 1;
 		}else if(but == 2){
 			if(tot > 1024L*1024L)
@@ -164,6 +166,8 @@ scroll(Flayer *l, int but)
 				p0 = tot*(y-s.min.y)/h;
 		}else if(but == 3 || but == 5){
 			p0 = l->origin+frcharofpt(&l->f, Pt(s.max.x, my));
+			if(but == 5)
+				p0 = l->origin+frcharofpt(&l->f, Pt(s.max.x, s.min.y+l->f.font->height+1));
 			if(p0 > tot)
 				p0 = tot;
 			but = 3;
