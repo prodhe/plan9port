@@ -2,16 +2,19 @@
 #include "bsdpty.c"
 #undef getpts
 
-#include <util.h>
-
 int
 getpts(int fd[], char *slave)
 {
-	if(openpty(&fd[1], &fd[0], NULL, NULL, NULL) >= 0){
-		fchmod(fd[1], 0620);
-		strcpy(slave, ttyname(fd[0]));
-		return 0;
-	}
-	sysfatal("no ptys");
-	return 0;
+       fd[1] = posix_openpt(ORDWR);
+       if (fd[1] >= 0) {
+               grantpt(fd[1]);
+               unlockpt(fd[1]);
+               fchmod(fd[1], 0620);
+               strcpy(slave, ptsname(fd[1]));
+               if ((fd[0] = open(slave, ORDWR)) >= 0)
+                       return 0;
+               close(fd[1]);
+       }
+       sysfatal("no ptys");
+       return 0;
 }
