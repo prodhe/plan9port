@@ -212,12 +212,19 @@ threadmain(int argc, char **argv)
 + (void)callsetNeedsDisplayInRect:(NSValue *)v
 {
 	NSRect r;
+	dispatch_time_t time;
 
 	r = [v rectValue];
 	LOG(@"callsetNeedsDisplayInRect(%g, %g, %g, %g)", r.origin.x, r.origin.y, r.size.width, r.size.height);
 	r = [win convertRectFromBacking:r];
 	LOG(@"setNeedsDisplayInRect(%g, %g, %g, %g)", r.origin.x, r.origin.y, r.size.width, r.size.height);
 	[layer setNeedsDisplayInRect:r];
+
+	time = dispatch_time(DISPATCH_TIME_NOW, 16 * NSEC_PER_MSEC);
+	dispatch_after(time, dispatch_get_main_queue(), ^(void){
+		[layer setNeedsDisplayInRect:r];
+	});
+
 	[myContent enlargeLastInputRect:r];
 }
 
@@ -340,6 +347,13 @@ struct Cursors {
 
 - (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication *)theApplication {
 	return YES;
+}
+
+- (void)windowDidResize:(NSNotification *)notification
+{
+	if(![myContent inLiveResize] && img) {
+		resizeimg();
+	}
 }
 
 - (void)windowDidBecomeKey:(id)arg
@@ -1112,7 +1126,6 @@ resizewindow(Rectangle r)
 
 		s = [myContent convertSizeFromBacking:NSMakeSize(Dx(r), Dy(r))];
 		[win setContentSize:s];
-		resizeimg();
 	});
 }
 
