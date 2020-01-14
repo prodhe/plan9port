@@ -28,7 +28,7 @@ extern	void		makecontext(ucontext_t*, void(*)(), int, ...);
 	/*
 	 * OS X before 10.5 (Leopard) does not provide
 	 * swapcontext nor makecontext, so we have to use our own.
-	 * In theory, Leopard does provide them, but when we use 
+	 * In theory, Leopard does provide them, but when we use
 	 * them, they seg fault.  Maybe we're using them wrong.
 	 * So just use our own versions, even on Leopard.
 	 */
@@ -187,7 +187,6 @@ struct Proc
 };
 
 #define proc() _threadproc()
-#define setproc(p) _threadsetproc(p)
 
 extern Proc *_threadprocs;
 extern Lock _threadprocslock;
@@ -198,7 +197,7 @@ extern Channel *_dowaitchan;
 
 extern void _procstart(Proc*, void (*fn)(Proc*));
 extern _Thread *_threadcreate(Proc*, void(*fn)(void*), void*, uint);
-extern void _threadexit(void);
+extern void _procexit(void);
 extern Proc *_threadproc(void);
 extern void _threadsetproc(Proc*);
 extern int _threadlock(Lock*, int, ulong);
