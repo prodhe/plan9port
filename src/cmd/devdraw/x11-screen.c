@@ -44,7 +44,7 @@ static Xwin*
 newxwin(Client *c)
 {
 	Xwin *w;
-	
+
 	w = mallocz(sizeof *w, 1);
 	if(w == nil)
 		sysfatal("out of memory");
@@ -59,7 +59,7 @@ static Xwin*
 findxwin(XDrawable d)
 {
 	Xwin *w, **l;
-	
+
 	for(l=&_x.windows; (w=*l) != nil; l=&w->next) {
 		if(w->drawable == d) {
 			/* move to front */
@@ -550,8 +550,6 @@ xattach(Client *client, char *label, char *winsize)
 		havemin = 0;
 	}
 	w = newxwin(client);
-	w->screenrect = Rect(0, 0, WidthOfScreen(xscreen), HeightOfScreen(xscreen));
-	w->windowrect = r;
 
 	memset(&attr, 0, sizeof attr);
 	attr.colormap = _x.cmap;
@@ -658,7 +656,7 @@ xattach(Client *client, char *label, char *winsize)
 		_x.losefocus = XInternAtom(_x.display, "_9WM_LOSE_FOCUS", False);
 		_x.wmprotos = XInternAtom(_x.display, "WM_PROTOCOLS", False);
 	}
-	
+
 	atoms[0] = _x.takefocus;
 	atoms[1] = _x.losefocus;
 	XChangeProperty(_x.display, w->drawable, _x.wmprotos, XA_ATOM, 32,
@@ -679,6 +677,8 @@ xattach(Client *client, char *label, char *winsize)
 		}
 	}else
 		fprint(2, "XGetWindowAttributes: bad attrs\n");
+	w->screenrect = Rect(0, 0, WidthOfScreen(xscreen), HeightOfScreen(xscreen));
+	w->windowrect = r;
 
 	/*
 	 * Allocate our local backing store.
@@ -700,7 +700,7 @@ xattach(Client *client, char *label, char *winsize)
 		_x.gcsimplesrc 	= xgc(w->screenpm, FillStippled, -1);
 		_x.gczero	= xgc(w->screenpm, -1, -1);
 		_x.gcreplsrc	= xgc(w->screenpm, FillTiled, -1);
-	
+
 		pmid = XCreatePixmap(_x.display, w->drawable, 1, 1, 1);
 		_x.gcfill0	= xgc(pmid, FillSolid, 0);
 		_x.gccopy0	= xgc(pmid, -1, -1);
@@ -729,7 +729,7 @@ rpc_setlabel(Client *client, char *label)
 {
 	Xwin *w = (Xwin*)client->view;
 	XTextProperty name;
-	
+
 	/*
 	 * Label and other properties required by ICCCCM.
 	 */
@@ -1032,7 +1032,7 @@ _xreplacescreenimage(Client *client)
 	XDrawable pixmap;
 	Rectangle r;
 	Xwin *w;
-	
+
 	w = (Xwin*)client->view;
 	r = w->newscreenr;
 	pixmap = XCreatePixmap(_x.display, w->drawable, Dx(r), Dy(r), _x.depth);
@@ -1042,7 +1042,9 @@ _xreplacescreenimage(Client *client)
 	w->nextscreenpm = pixmap;
 	w->screenr = r;
 	client->mouserect = r;
+	xunlock();
 	gfx_replacescreenimage(client, m);
+	xlock();
 	return 1;
 }
 
@@ -1527,7 +1529,7 @@ __xputsnarf(char *data)
 {
 	XButtonEvent e;
 	Xwin *w;
-	
+
 	if(strlen(data) >= SnarfSize)
 		return;
 	qlock(&clip.lk);
@@ -1730,7 +1732,7 @@ rpc_bouncemouse(Client *c, Mouse m)
 	Xwin *w = (Xwin*)c->view;
 	XButtonEvent e;
 	XWindow dw;
-	
+
 	xlock();
 	e.type = ButtonPress;
 	e.state = 0;

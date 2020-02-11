@@ -37,6 +37,8 @@ usage(void)
 void
 threadmain(int argc, char **argv)
 {
+	char *p;
+
 	ARGBEGIN{
 	case 'D':		/* for good ps -a listings */
 		break;
@@ -51,6 +53,10 @@ threadmain(int argc, char **argv)
 	default:
 		usage();
 	}ARGEND
+
+	fmtinstall('H', encodefmt);
+	if((p = getenv("DEVDRAWTRACE")) != nil)
+		trace = atoi(p);
 
 	if(srvname == nil) {
 		client0 = mallocz(sizeof(Client), 1);
@@ -395,11 +401,30 @@ matchmouse(Client *c)
 }
 
 void
+gfx_mouseresized(Client *c)
+{
+	gfx_mousetrack(c, -1, -1, -1, -1);
+}
+
+void
 gfx_mousetrack(Client *c, int x, int y, int b, uint ms)
 {
 	Mouse *m;
 
 	qlock(&c->eventlk);
+	if(x == -1 && y == -1 && b == -1 && ms == -1) {
+		Mouse *copy;
+		// repeat last mouse event for resize
+		if(c->mouse.ri == 0)
+			copy = &c->mouse.m[nelem(c->mouse.m)-1];
+		else
+			copy = &c->mouse.m[c->mouse.ri-1];
+		x = copy->xy.x;
+		y = copy->xy.y;
+		b = copy->buttons;
+		ms = copy->msec;
+		c->mouse.resized = 1;
+	}
 	if(x < c->mouserect.min.x)
 		x = c->mouserect.min.x;
 	if(x > c->mouserect.max.x)

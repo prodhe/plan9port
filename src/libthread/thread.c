@@ -109,7 +109,7 @@ threadalloc(void (*fn)(void*), void *arg, uint stack)
 	ulong z;
 
 	/* allocate the task and stack together */
-	t = malloc(sizeof *t+stack);
+	t = malloc(sizeof *t);
 	if(t == nil)
 		sysfatal("threadalloc malloc: %r");
 	memset(t, 0, sizeof *t);
@@ -122,7 +122,9 @@ threadalloc(void (*fn)(void*), void *arg, uint stack)
 	/* do a reasonable initialization */
 	if(stack == 0)
 		return t;
-	t->stk = (uchar*)(t+1);
+	t->stk = _threadstkalloc(stack);
+	if(t->stk == nil)
+		sysfatal("threadalloc malloc stack: %r");
 	t->stksize = stack;
 	memset(&t->context.uc, 0, sizeof t->context.uc);
 	sigemptyset(&zero);
@@ -134,10 +136,16 @@ threadalloc(void (*fn)(void*), void *arg, uint stack)
 		sysfatal("threadalloc getcontext: %r");
 //print("makecontext sp=%p t=%p startfn=%p\n", (char*)t->stk+t->stksize, t, t->startfn);
 
-	/* call makecontext to do the real work. */
-	/* leave a few words open on both ends */
-	t->context.uc.uc_stack.ss_sp = (void*)(t->stk+8);
-	t->context.uc.uc_stack.ss_size = t->stksize-64;
+	/*
+	 * Call makecontext to do the real work.
+	 * To avoid various mistakes on other system software,
+	 * debuggers, and so on, don't get too close to both
+	 * ends of the stack. Just staying away is much easier
+	 * than debugging everything (outside our control)
+	 * that has off-by-one errors.
+	 */
+	t->context.uc.uc_stack.ss_sp = (void*)(t->stk+64);
+	t->context.uc.uc_stack.ss_size = t->stksize-2*64;
 #if defined(__sun__) && !defined(__MAKECONTEXT_V2_SOURCE)		/* sigh */
 	/* can avoid this with __MAKECONTEXT_V2_SOURCE but only on SunOS 5.9 */
 	t->context.uc.uc_stack.ss_sp =
@@ -353,6 +361,7 @@ Top:
 		delthreadinproc(p, t);
 		p->nthread--;
 /*print("nthread %d\n", p->nthread); */
+		_threadstkfree(t->stk, t->stksize);
 		free(t);
 	}
 
@@ -509,6 +518,8 @@ needstack(int n)
 	_Thread *t;
 
 	t = proc()->thread;
+	if(t->stk == nil)
+		return;
 
 	if((char*)&t <= (char*)t->stk
 	|| (char*)&t - (char*)t->stk < 256+n){
