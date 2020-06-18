@@ -7,38 +7,13 @@
 #include <signal.h>
 #if !defined(__OpenBSD__)
 #	if defined(__APPLE__)
-#		define _XOPEN_SOURCE 	/* for Snow Leopard */
+#		define _XOPEN_SOURCE    /* for Snow Leopard */
 #	endif
 #	include <ucontext.h>
 #endif
 #include <sys/utsname.h>
 #include "libc.h"
 #include "thread.h"
-
-#if defined(__APPLE__)
-	/*
-	 * OS X before 10.5 (Leopard) does not provide
-	 * swapcontext nor makecontext, so we have to use our own.
-	 * In theory, Leopard does provide them, but when we use
-	 * them, they seg fault.  Maybe we're using them wrong.
-	 * So just use our own versions, even on Leopard.
-	 */
-#	define mcontext libthread_mcontext
-#	define mcontext_t libthread_mcontext_t
-#	define ucontext libthread_ucontext
-#	define ucontext_t libthread_ucontext_t
-#	define swapcontext libthread_swapcontext
-#	define makecontext libthread_makecontext
-#	if defined(__i386__)
-#		include "386-ucontext.h"
-#	elif defined(__x86_64__)
-#		include "x86_64-ucontext.h"
-#	elif defined(__ppc__) || defined(__power__)
-#		include "power-ucontext.h"
-#	else
-#		error "unknown architecture"
-#	endif
-#endif
 
 #if defined(__OpenBSD__)
 #	define mcontext libthread_mcontext
@@ -82,15 +57,6 @@ enum
 struct Context
 {
 	ucontext_t	uc;
-#ifdef __APPLE__
-	/*
-	 * On Snow Leopard, etc., the context routines exist,
-	 * so we use them, but apparently they write past the
-	 * end of the ucontext_t.  Sigh.  We put some extra
-	 * scratch space here for them.
-	 */
-	uchar	buf[1024];
-#endif
 };
 
 struct Execjob
@@ -100,6 +66,17 @@ struct Execjob
 	char **argv;
 	char *dir;
 	Channel *c;
+};
+
+struct _Procrendez
+{
+	Lock		*l;
+	int		asleep;
+#ifdef PLAN9PORT_USING_PTHREADS
+	pthread_cond_t	cond;
+#else
+	int		pid;
+#endif
 };
 
 struct _Thread
@@ -112,6 +89,11 @@ struct _Thread
 	void	(*startfn)(void*);
 	void	*startarg;
 	uint	id;
+#ifdef PLAN9PORT_USING_PTHREADS
+	pthread_t	osprocid;
+#else
+	int		osprocid;
+#endif
 	uchar	*stk;
 	uint	stksize;
 	int		exiting;
@@ -120,17 +102,7 @@ struct _Thread
 	char	state[256];
 	void *udata;
 	Alt	*alt;
-};
-
-struct _Procrendez
-{
-	Lock		*l;
-	int		asleep;
-#ifdef PLAN9PORT_USING_PTHREADS
-	pthread_cond_t	cond;
-#else
-	int		pid;
-#endif
+	_Procrendez schedrend;
 };
 
 extern	void	_procsleep(_Procrendez*);
@@ -149,6 +121,7 @@ struct Proc
 #endif
 	Lock		lock;
 	int			nswitch;
+	_Thread		*thread0;
 	_Thread		*thread;
 	_Thread		*pinthread;
 	_Threadlist	runqueue;
@@ -157,6 +130,8 @@ struct Proc
 	uint		nthread;
 	uint		sysproc;
 	_Procrendez	runrend;
+	Lock		schedlock;
+	_Thread	*schedthread;
 	Context	schedcontext;
 	void		*udata;
 	Jmp		sigjmp;
@@ -188,6 +163,8 @@ extern void _threadpexit(void);
 extern void _threaddaemonize(void);
 extern void *_threadstkalloc(int);
 extern void _threadstkfree(void*, int);
+extern void _threadpthreadmain(Proc*, _Thread*);
+extern void _threadpthreadstart(Proc*, _Thread*);
 
 #define USPALIGN(ucp, align) \
 	(void*)((((uintptr)(ucp)->uc_stack.ss_sp+(ucp)->uc_stack.ss_size)-(align))&~((align)-1))

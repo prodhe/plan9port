@@ -6,6 +6,8 @@
 extern "C" {
 #endif
 
+#define HAS_SYS_TERMIOS 1
+
 #define __BSD_VISIBLE 1 /* FreeBSD 5.x */
 #if defined(__sun__)
 #	define __EXTENSIONS__ 1 /* SunOS */
@@ -20,7 +22,7 @@ extern "C" {
 #define _NETBSD_SOURCE 1	/* NetBSD */
 #define _SVID_SOURCE 1
 #define _DEFAULT_SOURCE 1
-#if !defined(__APPLE__) && !defined(__OpenBSD__)
+#if !defined(__APPLE__) && !defined(__OpenBSD__) && !defined(__AIX__)
 #	define _XOPEN_SOURCE 1000
 #	define _XOPEN_SOURCE_EXTENDED 1
 #endif
@@ -33,10 +35,8 @@ extern "C" {
 #	define __LONG_LONG_SUPPORTED
 #endif
 #if defined(__AIX__)
-#	define _XOPEN_SOURCE 1
-#endif
-#if defined(__APPLE__)
-#	define _DARWIN_NO_64_BIT_INODE	/* Snow Leopard */
+#	define _ALL_SOURCE
+#	undef HAS_SYS_TERMIOS
 #endif
 #define _LARGEFILE64_SOURCE 1
 #define _FILE_OFFSET_BITS 64
